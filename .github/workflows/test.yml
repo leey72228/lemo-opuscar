@@ -19,7 +19,7 @@ jobs:
       - name: Setup FFmpeg 7.1
         uses: federicocarboni/setup-ffmpeg@v3
         with:
-          ffmpeg-version: '7.1.0'
+          ffmpeg-version: release
 
       - name: Verify tools
         run: |
