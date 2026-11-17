@@ -1,0 +1,70 @@
+name: Render
+
+on:
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup FFmpeg 7.1
+        uses: federicocarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: release
+
+      - name: Install dependencies
+        run: |
+          set -e
+          sh plugin/skills/lemo-opuscar/scripts/setup.sh deps
+
+      - name: Fetch Backrooms demo fonts
+        run: |
+          set -e
+          sh styles/backrooms/demo/tools/fonts.sh
+
+      - name: Render stills (1.5s, 5s, 15s)
+        env:
+          LEMO_ANGLE: swiftshader
+        run: |
+          set -e
+          mkdir -p artifacts/stills
+          node core/render/still.mjs styles/backrooms/demo 1.5 5 15 --out artifacts/stills
+
+      - name: Verify stills are not blank
+        run: |
+          set -e
+          for f in artifacts/stills/t_1.5.jpg artifacts/stills/t_5.jpg artifacts/stills/t_15.jpg; do
+            if [ ! -s "$f" ]; then
+              echo "Missing or empty: $f"
+              exit 1
+            fi
+            avg=$(ffmpeg -hide_banner -loglevel error -i "$f" -vf "scale=1:1" -f rawvideo -pix_fmt gray - | python3 -c 'import sys; b=sys.stdin.buffer.read(1); print(b[0] if b else 0)')
+            echo "$f avg_luma=$avg"
+            if [ "$avg" -le 8 ]; then
+              echo "Still looks black/blank: $f (avg_luma=$avg)"
+              exit 1
+            fi
+          done
+          ls -lh artifacts/stills
+
+      - name: Upload stills artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backrooms-stills
+          path: artifacts/stills
+          if-no-files-found: warn

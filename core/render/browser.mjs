@@ -4,7 +4,12 @@
 //      other systems get no forced backend. LEMO_ANGLE=metal|gl|vulkan|swiftshader… overrides it; LEMO_ANGLE=default means don't pass --use-angle.
 export const EXE = process.env.PLAYWRIGHT_CHROME || undefined;   // undefined = let playwright find it
 const angle = process.env.LEMO_ANGLE || (process.platform === 'darwin' ? 'metal' : 'default');
-export const ARGS = [...(angle === 'default' ? [] : [`--use-angle=${angle}`]), '--enable-gpu', '--ignore-gpu-blocklist', '--font-render-hinting=none', '--force-color-profile=srgb'];
+export const ARGS = [
+  ...(angle === 'default' ? [] : [`--use-angle=${angle}`]),
+  '--enable-gpu', '--ignore-gpu-blocklist',
+  '--font-render-hinting=none', '--force-color-profile=srgb',
+  '--no-sandbox', '--enable-webgl', '--enable-unsafe-swiftshader',
+];
 
 // A lost WebGL context leaves the page alive but no longer drawing: the frames come out blank and the render would still
 // exit 0. Two causes: a virtualised GPU (most cloud VMs and CI runners: Chrome creates the context and drops it right away),
