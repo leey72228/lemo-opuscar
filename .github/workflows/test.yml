@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup FFmpeg 7.1
+        uses: federicocarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: '7.1'
+
+      - name: Verify tools
+        run: |
+          set -e
+          echo "=== node -v ==="
+          node -v
+          echo "=== ffmpeg -version ==="
+          ffmpeg -version
+          echo "=== google-chrome --version ==="
+          google-chrome --version
